@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+void sortProcessesByArrivalTime(int n, int arrival[], int burst[], int priority[], int pid[]) {
+    int temp, i, j;
+    for (i = 0; i < n - 1; i++) {
+        for (j = 0; j < n - i - 1; j++) {
+            if (arrival[j] > arrival[j + 1] || (arrival[j] == arrival[j + 1] && priority[j] > priority[j + 1])) {
+                // Swap the processes based on arrival time and priority
+                temp = arrival[j]; arrival[j] = arrival[j + 1]; arrival[j + 1] = temp;
+                temp = burst[j]; burst[j] = burst[j + 1]; burst[j + 1] = temp;
+                temp = priority[j]; priority[j] = priority[j + 1]; priority[j + 1] = temp;
+                temp = pid[j]; pid[j] = pid[j + 1]; pid[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void preemptivePriorityScheduling(int n, int arrival[], int burst[], int priority[], int pid[]) {
+    int remainingBurst[n], completionTime[n], waitingTime[n], turnaroundTime[n];
+    bool completed[n];
+    int currentTime = 0, completedProcesses = 0, shortestIndex;
+    for (int i = 0; i < n; i++) {
+        remainingBurst[i] = burst[i];
+        completed[i] = false;
+    }
+
+    while (completedProcesses < n) {
+        int minPriority = 10000;
+        shortestIndex = -1;
+        
+        for (int i = 0; i < n; i++) {
+            if (!completed[i] && arrival[i] <= currentTime && priority[i] < minPriority) {
+                minPriority = priority[i];
+                shortestIndex = i;
+            }
+        }
+
+        if (shortestIndex != -1) {
+            remainingBurst[shortestIndex]--;
+            if (remainingBurst[shortestIndex] == 0) {
+                completed[shortestIndex] = true;
+                completedProcesses++;
+                completionTime[shortestIndex] = currentTime + 1;
+                turnaroundTime[shortestIndex] = completionTime[shortestIndex] - arrival[shortestIndex];
+                waitingTime[shortestIndex] = turnaroundTime[shortestIndex] - burst[shortestIndex];
+            }
+        }
+
+        currentTime++;
+    }
+
+    printf("\nProcess ID\tArrival Time\tBurst Time\tPriority\tCompletion Time\tWaiting Time\tTurnaround Time\n");
+    float totalWaitingTime = 0, totalTurnaroundTime = 0;
+    for (int i = 0; i < n; i++) {
+        printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t%d\n", pid[i], arrival[i], burst[i], priority[i], completionTime[i], waitingTime[i], turnaroundTime[i]);
+        totalWaitingTime += waitingTime[i];
+        totalTurnaroundTime += turnaroundTime[i];
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / n);
+    printf("Average Turnaround Time: %.2f\n", totalTurnaroundTime / n);
+}
+
+void nonPreemptivePriorityScheduling(int n, int arrival[], int burst[], int priority[], int pid[]) {
+    int completionTime[n], waitingTime[n], turnaroundTime[n];
+    bool completed[n];
+    int currentTime = 0, completedProcesses = 0;
+    for (int i = 0; i < n; i++) {
+        completed[i] = false;
+    }
+
+    while (completedProcesses < n) {
+        int highestPriority = 10000, selectedProcess = -1;
+        for (int i = 0; i < n; i++) {
+            if (!completed[i] && arrival[i] <= currentTime && priority[i] < highestPriority) {
+                highestPriority = priority[i];
+                selectedProcess = i;
+            }
+        }
+
+        if (selectedProcess != -1) {
+            currentTime += burst[selectedProcess];
+            completionTime[selectedProcess] = currentTime;
+            turnaroundTime[selectedProcess] = completionTime[selectedProcess] - arrival[selectedProcess];
+            waitingTime[selectedProcess] = turnaroundTime[selectedProcess] - burst[selectedProcess];
+            completed[selectedProcess] = true;
+            completedProcesses++;
+        } else {
+            currentTime++;
+        }
+    }
+
+    printf("\nProcess ID\tArrival Time\tBurst Time\tPriority\tCompletion Time\tWaiting Time\tTurnaround Time\n");
+    float totalWaitingTime = 0, totalTurnaroundTime = 0;
+    for (int i = 0; i < n; i++) {
+        printf("%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\t\t%d\n", pid[i], arrival[i], burst[i], priority[i], completionTime[i], waitingTime[i], turnaroundTime[i]);
+        totalWaitingTime += waitingTime[i];
+        totalTurnaroundTime += turnaroundTime[i];
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", totalWaitingTime / n);
+    printf("Average Turnaround Time: %.2f\n", totalTurnaroundTime / n);
+}
+
+int main() {
+    int n;
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+    int arrival[n], burst[n], priority[n], pid[n];
+
+    for (int i = 0; i < n; i++) {
+        pid[i] = i + 1;
+        printf("Enter arrival time, burst time, and priority for process %d: ", i + 1);
+        scanf("%d%d%d", &arrival[i], &burst[i], &priority[i]);
+    }
+
+    sortProcessesByArrivalTime(n, arrival, burst, priority, pid);
+
+    printf("Preemptive Priority Scheduling:\n");
+    preemptivePriorityScheduling(n, arrival, burst, priority, pid);
+
+    printf("\nNon-Preemptive Priority Scheduling:\n");
+    nonPreemptivePriorityScheduling(n, arrival, burst, priority, pid);
+
+    return 0;
+}
