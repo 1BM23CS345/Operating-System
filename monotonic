@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_TASKS 10
+#define MAX_TIME 100
+
+
+typedef struct {
+    int id;              
+    int period;         
+    int execution_time;  
+    int remaining_time;  
+    int next_deadline;  
+} Task;
+
+
+int compare(const void *a, const void *b) {
+    Task *taskA = (Task *)a;
+    Task *taskB = (Task *)b;
+    return taskA->period - taskB->period;
+}
+
+
+void rateMonotonicScheduling(Task tasks[], int num_tasks) {
+    int time = 0;
+    int completed_tasks = 0;
+
+   
+    for (int i = 0; i < num_tasks; i++) {
+        tasks[i].remaining_time = tasks[i].execution_time;
+        tasks[i].next_deadline = tasks[i].period;
+    }
+
+    
+    qsort(tasks, num_tasks, sizeof(Task), compare);
+
+    
+    printf("Time\tTask Executing\n");
+    while (completed_tasks < num_tasks) {
+      
+        for (int i = 0; i < num_tasks; i++) {
+            
+            if (tasks[i].remaining_time > 0 && time % tasks[i].period == 0) {
+                
+                printf("%d\tTask %d\n", time, tasks[i].id);
+                tasks[i].remaining_time--;
+                
+                if (tasks[i].remaining_time == 0) {
+                    completed_tasks++;
+                }
+                break;
+            }
+        }
+        time++;
+    }
+}
+
+int main() {
+    
+    Task tasks[MAX_TASKS];
+    int num_tasks;
+
+    
+    printf("Enter the number of tasks (up to %d): ", MAX_TASKS);
+    scanf("%d", &num_tasks);
+
+    
+    for (int i = 0; i < num_tasks; i++) {
+        tasks[i].id = i + 1;
+        printf("\nEnter details for Task %d:\n", i + 1);
+        printf("Period: ");
+        scanf("%d", &tasks[i].period);
+        printf("Execution time: ");
+        scanf("%d", &tasks[i].execution_time);
+    }
+
+   
+    rateMonotonicScheduling(tasks, num_tasks);
+
+    return 0;
+}
